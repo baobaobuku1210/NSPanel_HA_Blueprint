@@ -1634,6 +1634,17 @@ sensor:
     internal: false
     disabled_by_default: false
 
+  ##### Display mode (1 = EU, 2 = US, 3 = US Landscape)
+  - id: display_mode
+    name: Display mode
+    platform: nextion
+    variable_name: display_mode
+    precision: 0
+    accuracy_decimals: 0
+    internal: false
+    icon: mdi:phone-rotate-portrait
+    entity_category: diagnostic
+    
   ##### Wi-Fi Signal stregth
   - name: RSSI
     id: wifi_rssi
