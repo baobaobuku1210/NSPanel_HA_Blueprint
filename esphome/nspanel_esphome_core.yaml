@@ -2535,6 +2535,10 @@ script:
       - lambda: boot_progress->execute(10);
       - delay: 1s
       - lambda: |-
+          if () {
+            boot_log->execute("Boot", "Play boot sound");
+            buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
+          }
           set_brightness->execute(display_brightness->state);
           boot_log->execute("Boot", "Jump to wake-up page");
           ESP_LOGD("script.page_boot", "Jump to wake-up page: %s", wakeup_page_name->state.c_str());
