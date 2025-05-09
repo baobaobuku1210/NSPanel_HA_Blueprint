@@ -1428,26 +1428,7 @@ number:
         - lambda: |-
             disp1->send_command_printf("brightness_sleep=%i", int(x));
             page_screensaver->execute();
-
-  ##### Temperature Correction #####
-  - id: temperature_correction
-    name: Temperature Correction
-    platform: template
-    entity_category: config
-    unit_of_measurement: °C
-    min_value: -10
-    max_value: 10
-    initial_value: 0
-    step: 0.1
-    mode: box
-    restore_value: true
-    internal: false
-    optimistic: true
-    on_value:
-      - logger.log: Temperature correction changed.
-      - delay: 1s
-      - lambda: temp_nspanel->publish_state(temp_nspanel->raw_state);
-
+            
   ##### Timers settings #####
   - name: Timeout Page
     platform: template
