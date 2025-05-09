@@ -75,7 +75,6 @@ esphome:
             boot_log->execute("on_boot", "Reset notification entities");
             notification_label->publish_state("");
             notification_text->publish_state("");
-            notification_unread->turn_off();
         - wait_until:
             condition:
               - lambda: return (not isnan(stoi(baud_rate->state)));
@@ -569,7 +568,6 @@ api:
               if (current_page->state == "notification") goto_page->execute("home");
               notification_label->publish_state("");
               notification_text->publish_state("");
-              notification_unread->turn_off();
               set_component_visibility->execute("home.bt_notific", false);
             }
 
@@ -588,7 +586,6 @@ api:
               display_wrapped_text->execute("notification.notifi_text01", message.c_str(), display_mode->state == 2 ? 23 : 32);
               notification_label->publish_state(label.c_str());
               notification_text->publish_state(message.c_str());
-              notification_unread->turn_on();
               if (notification_sound->state) buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
             }
 
@@ -1026,14 +1023,12 @@ display:
                   if (!touch_event) {  // Release
                     notification_label->publish_state("");
                     notification_text->publish_state("");
-                    notification_unread->turn_off();
                     goto_page->execute("home");
                     set_component_visibility->execute("home.bt_notific", false);
                   }
                 break;
                 case 8:  // bt_clear
                   if (!touch_event) {  // Release
-                    notification_unread->turn_off();
                     goto_page->execute("home");
                   }
                 break;
@@ -1676,34 +1671,6 @@ sensor:
 
 ##### START - SWITCH CONFIGURATION #####
 switch:
-  ##### Notification unread #####
-  - name: Notification unread
-    platform: template
-    id: notification_unread
-    entity_category: config
-    optimistic: true
-    restore_mode: ALWAYS_OFF
-    on_turn_on:
-      lambda: |-
-        esphome::api::CustomAPIDevice ha_event;
-        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-          {"device_name", device_name->state.c_str()},
-          {"esphome_version", "${version}"},
-          {"type", "notification_changed"},
-          {"component", "notification_unread"},
-          {"action", "turn_on"}
-        });
-    on_turn_off:
-      lambda: |-
-        esphome::api::CustomAPIDevice ha_event;
-        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-          {"device_name", device_name->state.c_str()},
-          {"esphome_version", "${version}"},
-          {"type", "notification_changed"},
-          {"component", "notification_unread"},
-          {"action", "turn_off"}
-        });
-
   ##### Notification sound #####
   - name: Notification sound
     platform: template
@@ -1813,6 +1780,14 @@ text_sensor:
             }
           }
           return result;
+
+  ##### Entity Id of the entity displayed on the detailed pages
+  - id: detailed_entity
+    name: Detailed Entity
+    platform: template
+    icon: mdi:tablet-dashboard
+    internal: false
+    disabled_by_default: false
 
   ##### Current page name #####
   - id: current_page
