@@ -578,6 +578,7 @@ api:
               set_component_visibility->execute("home.bt_notific", true);
               goto_page->execute("notification");
               timer_reset_all->execute();
+              if (notification_sound->state) buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
             }
 
     # Updates the alarm settings page with current state and configuration, integrating with the panel's interface.
@@ -1392,25 +1393,6 @@ number:
             disp1->send_command_printf("brightness_sleep=%i", int(x));
             page_screensaver->execute();
 
-  ##### Temperature Correction #####
-  - id: temperature_correction
-    name: Temperature Correction
-    platform: template
-    entity_category: config
-    unit_of_measurement: °C
-    min_value: -10
-    max_value: 10
-    initial_value: 0
-    step: 0.1
-    mode: box
-    restore_value: true
-    internal: false
-    optimistic: true
-    on_value:
-      - logger.log: Temperature correction changed.
-      - delay: 1s
-      - lambda: temp_nspanel->publish_state(temp_nspanel->raw_state);
-
   ##### Timers settings #####
   - name: Timeout Page
     platform: template
@@ -1568,25 +1550,6 @@ sensor:
     configuration: DOWNSTREAM
     resistor: 11.2kOhm
 
-  ##### INTERNAL TEMPERATURE SENSOR, resistance to temperature (calculation) #####
-  - id: temp_nspanel
-    name: Temperature
-    platform: ntc
-    sensor: resistance_sensor
-    unit_of_measurement: °C
-    internal: false
-    calibration:
-      b_constant: 3950
-      reference_temperature: 25°C
-      reference_resistance: 10kOhm
-    filters:
-      - lambda: |-
-          return x + temperature_correction->state;
-    on_value:
-      then:
-        # Show panel's temperature if API or Wi-Fi are out
-        - lambda: display_embedded_temp->execute();
-
   ###### Display Brightness GET VALUE FROM NSPanel SLIDER #####
   - id: brightslider
     name: brightness Slider
@@ -1660,6 +1623,13 @@ sensor:
 
 ##### START - SWITCH CONFIGURATION #####
 switch:
+  ##### Notification sound #####
+  - name: Notification sound
+    platform: template
+    id: notification_sound
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
 
   ##### PHYSICAL SWITCH 1 #####
   - name: Relay 1
@@ -2497,6 +2467,10 @@ script:
       - lambda: boot_progress->execute(10);
       - delay: 1s
       - lambda: |-
+          if (notification_sound->state) {
+            boot_log->execute("Boot", "Play boot sound");
+            buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
+          }
           set_brightness->execute(display_brightness->state);
           boot_log->execute("Boot", "Jump to wake-up page");
           ESP_LOGD("script.page_boot", "Jump to wake-up page: %s", wakeup_page_name->state.c_str());
