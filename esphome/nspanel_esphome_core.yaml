@@ -578,7 +578,7 @@ api:
               set_component_visibility->execute("home.bt_notific", true);
               goto_page->execute("notification");
               timer_reset_all->execute();
-              display_wrapped_text->execute("notification.notifi_text01", message.c_str(), display_mode->state == 2 ? 23 : 32);
+              display_wrapped_text->execute(message.c_str(), display_mode->state == 2 ? 23 : 32);
               if (notification_sound->state) buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
             }
 
@@ -2708,7 +2708,7 @@ script:
     mode: restart
     then:
       - lambda: |-
-          display_wrapped_text->execute("notification.notifi_text01", display_mode->state == 2 ? 23 : 32);
+          display_wrapped_text->execute(display_mode->state == 2 ? 23 : 32);
 
   - id: page_qrcode
     mode: restart
