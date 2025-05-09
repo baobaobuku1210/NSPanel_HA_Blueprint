@@ -2710,7 +2710,7 @@ script:
     then:
       - lambda: |-
           disp1->set_component_text("notification.notifi_label");
-          display_wrapped_text->execute("notification.notifi_text01", notification_text->state.c_str(), display_mode->state == 2 ? 23 : 32);
+          display_wrapped_text->execute("notification.notifi_text01", display_mode->state == 2 ? 23 : 32);
 
   - id: page_qrcode
     mode: restart
