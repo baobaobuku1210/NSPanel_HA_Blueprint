@@ -1772,16 +1772,66 @@ switch:
 
 ##### START - TEXT SENSOR CONFIGURATION #####
 text_sensor:
-
-  ##### Entity Id of the entity displayed on the detailed pages
-  - id: detailed_entity
-    name: Detailed Entity
+  ##### Device name - Used by bluepring to find service's names #####
+  - id: device_name
+    name: Device Name
     platform: template
+    icon: mdi:identifier
+    entity_category: diagnostic
+    internal: false
+    disabled_by_default: false
+    lambda: |-
+      return {"${name}"};
+    filters:
+      - lambda: |-
+          #ifdef ESP_MAC_WIFI_STA
+          std::string suffix = "00ERROR";  // Default suffix in case of an error
+          uint8_t mac[6] = {0,0,0,0,0,0};
+          if (esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK) {
+            suffix.clear();  // Clear the default error suffix
+            for (int i = 3; i < 6; ++i) {  // Use last 3 bytes of MAC
+              char hex[3];
+              snprintf(hex, sizeof(hex), "%02X", mac[i]);
+              suffix += hex;
+            }
+          }
+          // Proceed with suffix (either MAC-based or default error indicator)
+          const std::string raw_name = (x + "-" + suffix);
+          #else
+          const std::string raw_name = x;
+          #endif
+
+          std::string result;
+          bool last_was_underscore = false;
+          for (const char& c : raw_name) {
+            if (isalnum(c)) {
+              result += tolower(c);  // Add alphanumeric characters as lowercase
+              last_was_underscore = false;
+            } else if (!last_was_underscore) {  // Replace non-alphanumeric with '_' but avoid consecutive '_'
+              result += '_';
+              last_was_underscore = true;
+            }
+          }
+          return result;
+
+  ##### Current page name #####
+  - id: current_page
+    name: Current Page
+    platform: nextion
+    component_name: current_page
     icon: mdi:tablet-dashboard
     internal: false
     disabled_by_default: false
-
-  ##### Current page name #####
+    filters:
+      - lambda: |-
+          x = x.c_str();
+          x.shrink_to_fit();
+          return x;
+    on_value:
+      lambda: |-
+        if (!id(is_uploading_tft)) {
+          page_changed->execute();
+        }
 
   - id: notification_label
     name: Notification Label
