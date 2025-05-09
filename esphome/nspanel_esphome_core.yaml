@@ -578,7 +578,6 @@ api:
               set_component_visibility->execute("home.bt_notific", true);
               goto_page->execute("notification");
               timer_reset_all->execute();
-              if (notification_sound->state) buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
             }
 
     # Updates the alarm settings page with current state and configuration, integrating with the panel's interface.
@@ -1661,13 +1660,6 @@ sensor:
 
 ##### START - SWITCH CONFIGURATION #####
 switch:
-  ##### Notification sound #####
-  - name: Notification sound
-    platform: template
-    id: notification_sound
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
 
   ##### PHYSICAL SWITCH 1 #####
   - name: Relay 1
@@ -2505,10 +2497,6 @@ script:
       - lambda: boot_progress->execute(10);
       - delay: 1s
       - lambda: |-
-          if (notification_sound->state) {
-            boot_log->execute("Boot", "Play boot sound");
-            buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
-          }
           set_brightness->execute(display_brightness->state);
           boot_log->execute("Boot", "Jump to wake-up page");
           ESP_LOGD("script.page_boot", "Jump to wake-up page: %s", wakeup_page_name->state.c_str());
