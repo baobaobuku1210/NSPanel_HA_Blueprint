@@ -1633,6 +1633,17 @@ sensor:
     icon: mdi:brightness-percent
     internal: false
     disabled_by_default: false
+    
+  ##### Charset (1 = International (original), 2 = CJK languages)
+  - id: display_charset
+    name: Display charset
+    platform: nextion
+    variable_name: charset
+    precision: 0
+    accuracy_decimals: 0
+    internal: false
+    icon: mdi:translate
+    entity_category: diagnostic
 
   ##### Display mode (1 = EU, 2 = US, 3 = US Landscape)
   - id: display_mode
