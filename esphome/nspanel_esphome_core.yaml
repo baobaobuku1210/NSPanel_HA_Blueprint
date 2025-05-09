@@ -1323,17 +1323,6 @@ binary_sensor:
               component: "hw_bt_right"
               command: "short_click"
 
-  ## Delays initial info from HA to the display #####
-  - name: Nextion display
-    id: nextion_init
-    platform: template
-    device_class: connectivity
-    publish_initial_state: true
-    entity_category: diagnostic
-    icon: mdi:tablet-dashboard
-    lambda: |-
-      return (!id(is_uploading_tft) and disp1->is_setup());
-
 ##### START - BUTTON CONFIGURATION #####
 button:
   ###### Factory Reset button #####
@@ -1428,25 +1417,6 @@ number:
         - lambda: |-
             disp1->send_command_printf("brightness_sleep=%i", int(x));
             page_screensaver->execute();
-
-  ##### Temperature Correction #####
-  #- id: temperature_correction
-  #  name: Temperature Correction
-  #  platform: template
-  #  entity_category: config
-  #  unit_of_measurement: °C
-  #  min_value: -10
-  #  max_value: 10
-  #  initial_value: 0
-  #  step: 0.1
-  #  mode: box
-  #  restore_value: true
-  #  internal: false
-  #  optimistic: true
-  #  on_value:
-  #    - logger.log: Temperature correction changed.
-  #    - delay: 1s
-  #    - lambda: temp_nspanel->publish_state(temp_nspanel->raw_state);
 
   ##### Timers settings #####
   - name: Timeout Page
@@ -1567,62 +1537,62 @@ sensor:
   #  6  # reserved             #
   #  7  # reserved             #
   ##############################
-  #- id: blueprint_status
-  #  name: Blueprint
-  #  platform: template
-  #  unit_of_measurement: "%"
-  #  accuracy_decimals: 1
-  #  entity_category: diagnostic
-  #  icon: mdi:link-variant
-  #  internal: false
-  #  disabled_by_default: false
-  #  filters:
-  #    - lambda: |-
-  #        if (!isnan(x) and x>0)
-  #          return (x / 62) * 100.0f;
-  #        else
-  #          return 0;
-  #  on_value:
-  #    then:
-  #      - script.execute: refresh_wifi_icon
+  - id: blueprint_status
+    name: Blueprint
+    platform: template
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    icon: mdi:link-variant
+    internal: false
+    disabled_by_default: false
+    filters:
+      - lambda: |-
+          if (!isnan(x) and x>0)
+            return (x / 62) * 100.0f;
+          else
+            return 0;
+    on_value:
+      then:
+        - script.execute: refresh_wifi_icon
 
   ##### INTERNAL TEMPERATURE SENSOR, ADC VALUE #####
-  #- id: ntc_source
-  #  platform: adc
-  #  pin: 38
-  #  attenuation: 12db
-  #  samples: 4
-  #  update_interval: 10s
-  #  filters:
-  #    - sliding_window_moving_average:
-  #        window_size: 6
-  #        send_every: 1
+  - id: ntc_source
+    platform: adc
+    pin: 38
+    attenuation: 12db
+    samples: 4
+    update_interval: 10s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 6
+          send_every: 1
 
   ##### INTERNAL TEMPERATURE SENSOR, adc reading converted to resistance (calculation)#####
-  #- id: resistance_sensor
-  #  platform: resistance
-  #  sensor: ntc_source
-  #  configuration: DOWNSTREAM
-   # resistor: 11.2kOhm
+  - id: resistance_sensor
+    platform: resistance
+    sensor: ntc_source
+    configuration: DOWNSTREAM
+    resistor: 11.2kOhm
 
   ##### INTERNAL TEMPERATURE SENSOR, resistance to temperature (calculation) #####
-  #- id: temp_nspanel
-  #  name: Temperature
-  #  platform: ntc
-  #  sensor: resistance_sensor
-  #  unit_of_measurement: °C
-  #  internal: false
-  #  calibration:
-  #    b_constant: 3950
-  #    reference_temperature: 25°C
-  #    reference_resistance: 10kOhm
-  #  filters:
-  #    - lambda: |-
-  #        return x + temperature_correction->state;
-  #  on_value:
-  #    then:
-  #      # Show panel's temperature if API or Wi-Fi are out
-  #      - lambda: display_embedded_temp->execute();
+  - id: temp_nspanel
+    name: Temperature
+    platform: ntc
+    sensor: resistance_sensor
+    unit_of_measurement: °C
+    internal: false
+    calibration:
+      b_constant: 3950
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    filters:
+      - lambda: |-
+          return x + temperature_correction->state;
+    on_value:
+      then:
+        # Show panel's temperature if API or Wi-Fi are out
+        - lambda: display_embedded_temp->execute();
 
   ###### Display Brightness GET VALUE FROM NSPanel SLIDER #####
   - id: brightslider
@@ -1664,28 +1634,6 @@ sensor:
     internal: false
     disabled_by_default: false
 
-  ##### Charset (1 = International (original), 2 = CJK languages)
-  - id: display_charset
-    name: Display charset
-    platform: nextion
-    variable_name: charset
-    precision: 0
-    accuracy_decimals: 0
-    internal: false
-    icon: mdi:translate
-    entity_category: diagnostic
-
-  ##### Display mode (1 = EU, 2 = US, 3 = US Landscape)
-  - id: display_mode
-    name: Display mode
-    platform: nextion
-    variable_name: display_mode
-    precision: 0
-    accuracy_decimals: 0
-    internal: false
-    icon: mdi:phone-rotate-portrait
-    entity_category: diagnostic
-
   ##### Wi-Fi Signal stregth
   - name: RSSI
     id: wifi_rssi
@@ -1697,42 +1645,6 @@ sensor:
 
 ##### START - SWITCH CONFIGURATION #####
 switch:
-  ##### Notification unread #####
-#  - name: Notification unread
-#    platform: template
-#    id: notification_unread
-#    entity_category: config
-#    optimistic: true
-#    restore_mode: ALWAYS_OFF
-#    on_turn_on:
-#      lambda: |-
-#        esphome::api::CustomAPIDevice ha_event;
-#        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-#          {"device_name", device_name->state.c_str()},
-#          {"esphome_version", "${version}"},
-#          {"type", "notification_changed"},
-#          {"component", "notification_unread"},
-#          {"action", "turn_on"}
-#        });
-#    on_turn_off:
-#      lambda: |-
-#        esphome::api::CustomAPIDevice ha_event;
-#        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-#          {"device_name", device_name->state.c_str()},
-#          {"esphome_version", "${version}"},
-#          {"type", "notification_changed"},
-#          {"component", "notification_unread"},
-#          {"action", "turn_off"}
-#        });
-
-  ##### Notification sound #####
-#  - name: Notification sound
-#    platform: template
-#    id: notification_sound
-#    entity_category: config
-#    optimistic: true
-#    restore_mode: RESTORE_DEFAULT_OFF
-
   ##### PHYSICAL SWITCH 1 #####
   - name: Relay 1
     platform: gpio
@@ -1844,51 +1756,51 @@ text_sensor:
     disabled_by_default: false
 
   ##### Current page name #####
- # - id: current_page
- #   name: Current Page
- #   platform: nextion
- #   component_name: current_page
- #   icon: mdi:tablet-dashboard
- #   internal: false
- #   disabled_by_default: false
- #   filters:
- #     - lambda: |-
- #         x = x.c_str();
- #         x.shrink_to_fit();
- #         return x;
- #   on_value:
- #     lambda: |-
- #       if (!id(is_uploading_tft)) {
- #         page_changed->execute();
- #       }
+  - id: current_page
+    name: Current Page
+    platform: nextion
+    component_name: current_page
+    icon: mdi:tablet-dashboard
+    internal: false
+    disabled_by_default: false
+    filters:
+      - lambda: |-
+          x = x.c_str();
+          x.shrink_to_fit();
+          return x;
+    on_value:
+      lambda: |-
+        if (!id(is_uploading_tft)) {
+          page_changed->execute();
+        }
 
- # - id: notification_label
- #   name: Notification Label
- #   platform: template
- #   on_value:
- #     lambda: |-
- #       esphome::api::CustomAPIDevice ha_event;
- #       ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
- #         {"device_name", device_name->state.c_str()},
- #         {"esphome_version", "${version}"},
- #         {"type", "notification_changed"},
- #         {"component", "notification_label"},
- #         {"action", "new_value"}
- #       });
+  - id: notification_label
+    name: Notification Label
+    platform: template
+    on_value:
+      lambda: |-
+        esphome::api::CustomAPIDevice ha_event;
+        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
+          {"device_name", device_name->state.c_str()},
+          {"esphome_version", "${version}"},
+          {"type", "notification_changed"},
+          {"component", "notification_label"},
+          {"action", "new_value"}
+        });
 
-  #- id: notification_text
-  #  name: Notification Text
-  #  platform: template
-  #  on_value:
-  #    lambda: |-
-  #      esphome::api::CustomAPIDevice ha_event;
-  #      ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-  #        {"device_name", device_name->state.c_str()},
-  #        {"esphome_version", "${version}"},
-  #        {"type", "notification_changed"},
-  #        {"component", "notification_text"},
-  #        {"action", "new_value"}
-  #      });
+  - id: notification_text
+    name: Notification Text
+    platform: template
+    on_value:
+      lambda: |-
+        esphome::api::CustomAPIDevice ha_event;
+        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
+          {"device_name", device_name->state.c_str()},
+          {"esphome_version", "${version}"},
+          {"type", "notification_changed"},
+          {"component", "notification_text"},
+          {"action", "new_value"}
+        });
 
   ##### NSPanel event - Execute actions from ESPHome - NO push to HA #####
   - id: disp1_local_event
@@ -2149,21 +2061,21 @@ script:
               });
           }
 
-#  - id: display_embedded_temp
-#    mode: restart
-#    then:
-#      - lambda: |-
-#          if (id(embedded_indoor_temp) or !wifi_component->is_connected() or !api_server->is_connected()) {
-#            const std::string temp_units = "${temp_units}";
-#            const bool temp_unit_fahrenheit = (temp_units == "°F" || temp_units == "F" || temp_units == "°f" || temp_units == "f");
-#            char buffer[15]; // Buffer for formatted temperature string
-#            if (temp_unit_fahrenheit) {
-#              snprintf(buffer, sizeof(buffer), "%.0f${temp_units}", (id(temp_nspanel).state * 9.0 / 5.0) + 32); // Fahrenheit with no decimal
-#            } else {
-#              snprintf(buffer, sizeof(buffer), "%.1f${temp_units}", id(temp_nspanel).state); // Celsius with one decimal
-#            }
-#            id(disp1)->set_component_text("home.indr_temp", adjustDecimalSeparator(buffer, id(mui_decimal_separator)).c_str());
-#          }
+  - id: display_embedded_temp
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(embedded_indoor_temp) or !wifi_component->is_connected() or !api_server->is_connected()) {
+            const std::string temp_units = "${temp_units}";
+            const bool temp_unit_fahrenheit = (temp_units == "°F" || temp_units == "F" || temp_units == "°f" || temp_units == "f");
+            char buffer[15]; // Buffer for formatted temperature string
+            if (temp_unit_fahrenheit) {
+              snprintf(buffer, sizeof(buffer), "%.0f${temp_units}", (id(temp_nspanel).state * 9.0 / 5.0) + 32); // Fahrenheit with no decimal
+            } else {
+              snprintf(buffer, sizeof(buffer), "%.1f${temp_units}", id(temp_nspanel).state); // Celsius with one decimal
+            }
+            id(disp1)->set_component_text("home.indr_temp", adjustDecimalSeparator(buffer, id(mui_decimal_separator)).c_str());
+          }
 
   - id: display_wrapped_text
     mode: parallel
