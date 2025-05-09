@@ -1336,31 +1336,10 @@ binary_sensor:
 
 ##### START - BUTTON CONFIGURATION #####
 button:
-  ###### Factory Reset button #####
-  - name: Factory reset
-    platform: factory_reset
-    id: nspanel_factory_reset
-    internal: false
-    disabled_by_default: true
-    icon: mdi:restart-alert
-
   ###### REBOOT BUTTON #####
   - name: Restart
     platform: restart
     id: restart_nspanel
-
-  ###### Power cycle Nextion Display ######
-  - name: Nextion display - Power cycle
-    id: screen_power_cycle
-    platform: template
-    internal: false
-    disabled_by_default: true
-    icon: mdi:power-cycle
-    entity_category: diagnostic
-    on_press:
-      - switch.turn_off: screen_power
-      - delay: 1s
-      - switch.turn_on: screen_power
 
 ##### START - NUMBER CONFIGURATION #####
 number:
@@ -1428,7 +1407,26 @@ number:
         - lambda: |-
             disp1->send_command_printf("brightness_sleep=%i", int(x));
             page_screensaver->execute();
-            
+
+  ##### Temperature Correction #####
+  - id: temperature_correction
+    name: Temperature Correction
+    platform: template
+    entity_category: config
+    unit_of_measurement: °C
+    min_value: -10
+    max_value: 10
+    initial_value: 0
+    step: 0.1
+    mode: box
+    restore_value: true
+    internal: false
+    optimistic: true
+    on_value:
+      - logger.log: Temperature correction changed.
+      - delay: 1s
+      - lambda: temp_nspanel->publish_state(temp_nspanel->raw_state);
+
   ##### Timers settings #####
   - name: Timeout Page
     platform: template
@@ -1586,7 +1584,24 @@ sensor:
     configuration: DOWNSTREAM
     resistor: 11.2kOhm
 
-
+  ##### INTERNAL TEMPERATURE SENSOR, resistance to temperature (calculation) #####
+  - id: temp_nspanel
+    name: Temperature
+    platform: ntc
+    sensor: resistance_sensor
+    unit_of_measurement: °C
+    internal: false
+    calibration:
+      b_constant: 3950
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    filters:
+      - lambda: |-
+          return x + temperature_correction->state;
+    on_value:
+      then:
+        # Show panel's temperature if API or Wi-Fi are out
+        - lambda: display_embedded_temp->execute();
 
   ###### Display Brightness GET VALUE FROM NSPanel SLIDER #####
   - id: brightslider
@@ -2111,6 +2126,22 @@ script:
                 {"esphome", "${version}"},
                 {"blueprint", version_blueprint->state.c_str()}
               });
+          }
+
+  - id: display_embedded_temp
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(embedded_indoor_temp) or !wifi_component->is_connected() or !api_server->is_connected()) {
+            const std::string temp_units = "${temp_units}";
+            const bool temp_unit_fahrenheit = (temp_units == "°F" || temp_units == "F" || temp_units == "°f" || temp_units == "f");
+            char buffer[15]; // Buffer for formatted temperature string
+            if (temp_unit_fahrenheit) {
+              snprintf(buffer, sizeof(buffer), "%.0f${temp_units}", (id(temp_nspanel).state * 9.0 / 5.0) + 32); // Fahrenheit with no decimal
+            } else {
+              snprintf(buffer, sizeof(buffer), "%.1f${temp_units}", id(temp_nspanel).state); // Celsius with one decimal
+            }
+            id(disp1)->set_component_text("home.indr_temp", adjustDecimalSeparator(buffer, id(mui_decimal_separator)).c_str());
           }
 
   - id: display_wrapped_text
