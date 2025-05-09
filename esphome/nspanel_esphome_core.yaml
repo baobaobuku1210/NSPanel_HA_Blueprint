@@ -1323,6 +1323,17 @@ binary_sensor:
               component: "hw_bt_right"
               command: "short_click"
 
+  ## Delays initial info from HA to the display #####
+  - name: Nextion display
+    id: nextion_init
+    platform: template
+    device_class: connectivity
+    publish_initial_state: true
+    entity_category: diagnostic
+    icon: mdi:tablet-dashboard
+    lambda: |-
+      return (!id(is_uploading_tft) and disp1->is_setup());
+
 ##### START - BUTTON CONFIGURATION #####
 button:
   ###### Factory Reset button #####
@@ -1667,6 +1678,42 @@ sensor:
 
 ##### START - SWITCH CONFIGURATION #####
 switch:
+  ##### Notification unread #####
+  - name: Notification unread
+    platform: template
+    id: notification_unread
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      lambda: |-
+        esphome::api::CustomAPIDevice ha_event;
+        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
+          {"device_name", device_name->state.c_str()},
+          {"esphome_version", "${version}"},
+          {"type", "notification_changed"},
+          {"component", "notification_unread"},
+          {"action", "turn_on"}
+        });
+    on_turn_off:
+      lambda: |-
+        esphome::api::CustomAPIDevice ha_event;
+        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
+          {"device_name", device_name->state.c_str()},
+          {"esphome_version", "${version}"},
+          {"type", "notification_changed"},
+          {"component", "notification_unread"},
+          {"action", "turn_off"}
+        });
+
+  ##### Notification sound #####
+  - name: Notification sound
+    platform: template
+    id: notification_sound
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
   ##### PHYSICAL SWITCH 1 #####
   - name: Relay 1
     platform: gpio
