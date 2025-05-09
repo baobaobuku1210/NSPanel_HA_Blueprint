@@ -1633,7 +1633,7 @@ sensor:
     icon: mdi:brightness-percent
     internal: false
     disabled_by_default: false
-    
+
   ##### Charset (1 = International (original), 2 = CJK languages)
   - id: display_charset
     name: Display charset
@@ -1655,7 +1655,7 @@ sensor:
     internal: false
     icon: mdi:phone-rotate-portrait
     entity_category: diagnostic
-    
+
   ##### Wi-Fi Signal stregth
   - name: RSSI
     id: wifi_rssi
