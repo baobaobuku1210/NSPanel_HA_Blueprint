@@ -2585,7 +2585,6 @@ script:
           else if (current_page->state == "keyb_num") page_keyb_num->execute();
           else if (current_page->state == "light") page_light->execute();
           else if (current_page->state == "media_player") page_media_player->execute();
-          else if (current_page->state == "notification") page_notification->execute();
           else if (current_page->state == "qrcode") page_qrcode->execute();
           else if (current_page->state == "screensaver") page_screensaver->execute();
           else if (current_page->state == "settings") page_settings->execute();
