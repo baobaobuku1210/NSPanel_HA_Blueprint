@@ -545,14 +545,6 @@ api:
             }
 
     # This service removes any displayed notifications from the screen, helping to keep the user interface clean and focused on its primary functions.
-    - service: notification_clear
-      then:
-        - lambda: |-
-            if (!id(is_uploading_tft)) {
-              if (current_page->state == "notification") goto_page->execute("home");
-              set_component_visibility->execute("home.bt_notific", false);
-            }
-
     # Displays a notification message on the screen, useful for alerts or informational updates.
     - service: notification_show
       variables:
@@ -3080,7 +3072,6 @@ script:
           page_keyb_num->stop();
           page_light->stop();
           page_media_player->stop();
-          page_notification->stop();
           page_qrcode->stop();
           page_screensaver->stop();
           page_settings->stop();
