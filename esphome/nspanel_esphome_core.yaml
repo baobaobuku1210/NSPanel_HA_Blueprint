@@ -572,7 +572,6 @@ api:
               display_wrapped_text->execute("notification.notifi_text01", message.c_str(), display_mode->state == 2 ? 23 : 32);
               notification_label->publish_state(label.c_str());
               notification_text->publish_state(message.c_str());
-              notification_unread->turn_on();
             }
 
     # Updates the alarm settings page with current state and configuration, integrating with the panel's interface.
