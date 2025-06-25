@@ -562,10 +562,8 @@ api:
         - lambda: |-
             if (!id(is_uploading_tft)) {
               set_component_visibility->execute("home.bt_notific", true);
-              goto_page->execute("notification");
+              goto_page->execute("home");
               timer_reset_all->execute();
-              disp1->set_component_text("notification.notifi_label", label.c_str());
-              display_wrapped_text->execute("notification.notifi_text01", message.c_str(), display_mode->state == 2 ? 23 : 32);
             }
 
     # Updates the alarm settings page with current state and configuration, integrating with the panel's interface.
@@ -2684,13 +2682,6 @@ script:
   - id: page_media_player
     mode: restart
     then:  # There's nothing here so far
-
-  - id: page_notification
-    mode: restart
-    then:
-      - lambda: |-
-          disp1->set_component_text("notification.notifi_label", notification_label->state.c_str());
-          display_wrapped_text->execute("notification.notifi_text01", notification_text->state.c_str(), display_mode->state == 2 ? 23 : 32);
 
   - id: page_qrcode
     mode: restart
