@@ -73,8 +73,6 @@ esphome:
             boot_log->execute("on_boot", "Publish device name");
             device_name->publish_state("${name}");
             boot_log->execute("on_boot", "Reset notification entities");
-            notification_label->publish_state("");
-            notification_text->publish_state("");
         - wait_until:
             condition:
               - lambda: return (not isnan(stoi(baud_rate->state)));
@@ -552,8 +550,6 @@ api:
         - lambda: |-
             if (!id(is_uploading_tft)) {
               if (current_page->state == "notification") goto_page->execute("home");
-              notification_label->publish_state("");
-              notification_text->publish_state("");
               set_component_visibility->execute("home.bt_notific", false);
             }
 
@@ -570,8 +566,6 @@ api:
               timer_reset_all->execute();
               disp1->set_component_text("notification.notifi_label", label.c_str());
               display_wrapped_text->execute("notification.notifi_text01", message.c_str(), display_mode->state == 2 ? 23 : 32);
-              notification_label->publish_state(label.c_str());
-              notification_text->publish_state(message.c_str());
             }
 
     # Updates the alarm settings page with current state and configuration, integrating with the panel's interface.
@@ -1006,8 +1000,6 @@ display:
               switch (component_id) {
                 case 7:  // bt_accept
                   if (!touch_event) {  // Release
-                    notification_label->publish_state("");
-                    notification_text->publish_state("");
                     goto_page->execute("home");
                     set_component_visibility->execute("home.bt_notific", false);
                   }
@@ -1810,34 +1802,6 @@ text_sensor:
         if (!id(is_uploading_tft)) {
           page_changed->execute();
         }
-
-  - id: notification_label
-    name: Notification Label
-    platform: template
-    on_value:
-      lambda: |-
-        esphome::api::CustomAPIDevice ha_event;
-        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-          {"device_name", device_name->state.c_str()},
-          {"esphome_version", "${version}"},
-          {"type", "notification_changed"},
-          {"component", "notification_label"},
-          {"action", "new_value"}
-        });
-
-  - id: notification_text
-    name: Notification Text
-    platform: template
-    on_value:
-      lambda: |-
-        esphome::api::CustomAPIDevice ha_event;
-        ha_event.fire_homeassistant_event("esphome.nspanel_ha_blueprint", {
-          {"device_name", device_name->state.c_str()},
-          {"esphome_version", "${version}"},
-          {"type", "notification_changed"},
-          {"component", "notification_text"},
-          {"action", "new_value"}
-        });
 
   ##### NSPanel event - Execute actions from ESPHome - NO push to HA #####
   - id: disp1_local_event
