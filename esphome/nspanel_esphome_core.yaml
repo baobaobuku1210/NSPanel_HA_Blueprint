@@ -575,7 +575,6 @@ api:
               notification_label->publish_state(label.c_str());
               notification_text->publish_state(message.c_str());
               notification_unread->turn_on();
-              if (notification_sound->state) buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
             }
 
     # Updates the alarm settings page with current state and configuration, integrating with the panel's interface.
@@ -1716,21 +1715,13 @@ switch:
           {"action", "turn_off"}
         });
 
-  ##### Notification sound #####
-  - name: Notification sound
-    platform: template
-    id: notification_sound
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-
   ##### PHYSICAL SWITCH 1 #####
   - name: Relay 1
     platform: gpio
     id: relay_1
     pin:
       number: 22
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       then:
         - lambda: |-
@@ -1751,7 +1742,7 @@ switch:
     id: relay_2
     pin:
       number: 19
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       then:
         - lambda: |-
@@ -2589,7 +2580,7 @@ script:
       - lambda: boot_progress->execute(10);
       - delay: 1s
       - lambda: |-
-          if (notification_sound->state) {
+          if () {
             boot_log->execute("Boot", "Play boot sound");
             buzzer->play("two short:d=4,o=5,b=100:16e6,16e6");
           }
